@@ -28,10 +28,11 @@ services:
     privileged: true
 
   waypoint_server:
-    build:
-        context: ~/simulation_ws/src/
-        dockerfile: ./tortoisebot_ros1_docker/waypoint_server/Dockerfile
-    image: tortoisebot-ros1-waypoints:v1
+    # build:
+    #     context: ~/simulation_ws/src/
+    #     dockerfile: ./tortoisebot_ros1_docker/waypoint_server/Dockerfile
+    # image: tortoisebot-ros1-waypoints:v1
+    image: kkhadka343/kailash-cp22:tortoisebot-ros1-waypoints
     container_name: waypoint_server_container
     stdin_open: true
     tty: true
