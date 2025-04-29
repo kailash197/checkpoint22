@@ -1,0 +1,32 @@
+version: '3.7'
+
+services:
+  roscore_gazebo:
+    build:
+        context: ~/simulation_ws/src/
+        dockerfile: ./tortoisebot_ros1_docker/gazebo/Dockerfile
+    image: tortoisebot-ros1-gazebo:v1
+    container_name: gazebo_container
+    command: /bin/bash -c "source /home/ttbot/simulation_ws/devel/setup.bash && roslaunch tortoisebot_gazebo tortoisebot_playground.launch"
+    stdin_open: true
+    tty: true
+    networks:
+      - ros_network
+    ports:
+      - 11311:11311
+    environment:
+      - DISPLAY=${DISPLAY}
+      - QT_X11_NO_MITSHM=1
+      - ROS_HOSTNAME=gazebo_container
+      - ROS_MASTER_URI=http://gazebo_container:11311
+      - ROS_DISTRO=noetic
+      - USERNAME=ttbot
+      - CATKIN_WS=/home/ttbot/simulation_ws
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    privileged: true
+
+networks:
+  ros_network:
+    driver: bridge
+    name: checkpoint22_ros_network  # Explicitly name the network
