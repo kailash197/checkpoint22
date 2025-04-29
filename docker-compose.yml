@@ -40,10 +40,9 @@ services:
       - ros_network
     ports:
       - "9090:9090"  # rosbridge
-      - "8080:8080"  # web-video-server
-      - 11315:11315
+      - 11315:11315  # web-video-server
     environment:
-      - SLOT_ROSBRIDGE_PORT=20001
+      - SLOT_ROSBRIDGE_PORT=9090
       - ROS_HOSTNAME=waypoint_server_container
       - ROS_MASTER_URI=http://gazebo_container:11311
       - ROS_DISTRO=noetic
@@ -52,6 +51,31 @@ services:
     privileged: true
     depends_on:
       - roscore_gazebo
+
+  web_server:
+    build:
+        context: ~/simulation_ws/src/
+        dockerfile: ./tortoisebot_ros1_docker/web_server/Dockerfile
+    image: tortoisebot-ros1-webapp:v1
+    container_name: web_server_container
+    command: "/entrypoint.sh"
+    networks:
+      - ros_network
+    ports:
+      - "8080:80"
+    environment:
+      - ROSBRIDGE_URL=ws://waypoint_server_container:9090
+      - ROS_HOSTNAME=web_server_container
+      - ROS_MASTER_URI=http://gazebo_container:11311
+      - ROS_DISTRO=noetic
+      - USERNAME=ttbot
+      - WEBPAGE_WS=/home/ttbot/webpage_ws
+    privileged: true
+    # volumes:
+    #   - ./webpage_4_robots:/usr/share/nginx/html  # Live code reload
+    depends_on:
+      - roscore_gazebo
+      - waypoint_server
 
 networks:
   ros_network:
