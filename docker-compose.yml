@@ -2,10 +2,11 @@ version: '3.7'
 
 services:
   roscore_gazebo:
-    build:
-        context: ~/simulation_ws/src/
-        dockerfile: ./tortoisebot_ros1_docker/gazebo/Dockerfile
-    image: tortoisebot-ros1-gazebo:v1
+    # build:
+    #     context: ~/simulation_ws/src/
+    #     dockerfile: ./tortoisebot_ros1_docker/gazebo/Dockerfile
+    # image: tortoisebot-ros1-gazebo:v1
+    image: kkhadka343/kailash-cp22:tortoisebot-ros1-gazebo
     container_name: gazebo_container
     command: /bin/bash -c "source /home/ttbot/simulation_ws/devel/setup.bash && roslaunch tortoisebot_gazebo tortoisebot_playground.launch"
     stdin_open: true
