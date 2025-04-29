@@ -27,6 +27,31 @@ services:
       - /tmp/.X11-unix:/tmp/.X11-unix
     privileged: true
 
+  waypoint_server:
+    build:
+        context: ~/simulation_ws/src/
+        dockerfile: ./tortoisebot_ros1_docker/waypoint_server/Dockerfile
+    image: tortoisebot-ros1-waypoints:v1
+    container_name: waypoint_server_container
+    stdin_open: true
+    tty: true
+    networks:
+      - ros_network
+    ports:
+      - "9090:9090"  # rosbridge
+      - "8080:8080"  # web-video-server
+      - 11315:11315
+    environment:
+      - SLOT_ROSBRIDGE_PORT=20001
+      - ROS_HOSTNAME=waypoint_server_container
+      - ROS_MASTER_URI=http://gazebo_container:11311
+      - ROS_DISTRO=noetic
+      - USERNAME=ttbot
+      - CATKIN_WS=/home/ttbot/simulation_ws
+    privileged: true
+    depends_on:
+      - roscore_gazebo
+
 networks:
   ros_network:
     driver: bridge
