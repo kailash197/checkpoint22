@@ -53,10 +53,11 @@ services:
       - roscore_gazebo
 
   web_server:
-    build:
-        context: ~/simulation_ws/src/
-        dockerfile: ./tortoisebot_ros1_docker/web_server/Dockerfile
-    image: tortoisebot-ros1-webapp:v1
+    # build:
+    #     context: ~/simulation_ws/src/
+    #     dockerfile: ./tortoisebot_ros1_docker/web_server/Dockerfile
+    # image: tortoisebot-ros1-webapp:v1
+    image: kkhadka343/kailash-cp22:tortoisebot-ros1-webapp
     container_name: web_server_container
     command: "/entrypoint.sh"
     networks:
@@ -71,8 +72,6 @@ services:
       - USERNAME=ttbot
       - WEBPAGE_WS=/home/ttbot/webpage_ws
     privileged: true
-    # volumes:
-    #   - ./webpage_4_robots:/usr/share/nginx/html  # Live code reload
     depends_on:
       - roscore_gazebo
       - waypoint_server
