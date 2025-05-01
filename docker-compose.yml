@@ -52,6 +52,28 @@ services:
     depends_on:
       - roscore_gazebo
 
+  mapping:
+    build:
+        context: ~/simulation_ws/src/
+        dockerfile: ./tortoisebot_ros1_docker/mapping/Dockerfile
+    image: tortoisebot-ros1-slam:v1
+    container_name: mapping_container
+    stdin_open: true
+    tty: true
+    networks:
+      - ros_network
+    environment:
+      - DISPLAY=${DISPLAY}
+      - QT_X11_NO_MITSHM=1
+      - ROS_HOSTNAME=mapping_container
+      - ROS_MASTER_URI=http://gazebo_container:11311
+      - ROS_DISTRO=noetic
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    depends_on:
+      - roscore_gazebo
+    privileged: true
+
   web_server:
     # build:
     #     context: ~/simulation_ws/src/
@@ -75,6 +97,7 @@ services:
     depends_on:
       - roscore_gazebo
       - waypoint_server
+      - mapping
 
 networks:
   ros_network:

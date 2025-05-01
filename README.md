@@ -53,14 +53,21 @@ docker-compose up -d
 
 # 3. Check running containers
 docker-compose ps
+
+# 4. Attach shell to `roscore_gazebo` container
 docker-compose exec roscore_gazebo /bin/bash
 
-# 4. Move the robot around using the on-screen joystick present in the Web Application.
+# 5. Move the robot around using the on-screen joystick present in the Web Application.
 # or start/stop using following.
 rostopic pub /cmd_vel geometry_msgs/Twist "{linear: {x: 0.0}, angular: {z: 1.0}}"
 rostopic pub /cmd_vel geometry_msgs/Twist "{linear: {x: 0.0}, angular: {z: 0.0}}"
 
-# 5. Stop services
+# 6. Local Links
+    ROSBRIGE: ws://localhost:9090
+    Webpage: http://localhost:8080
+    MJPEG Stream Host: http://localhost:11315
+
+# 7. Stop services
 docker-compose down
 xhost -local:root
 ```
