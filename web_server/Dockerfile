@@ -11,15 +11,12 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     nginx \
-    git \
-    wget \
-    python3-pip && \
-    rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/*
 
-# ===== Configure Nginx =====
-COPY ./tortoisebot_ros1_docker/web_server/nginx.conf /etc/nginx/conf.d/default.conf
-RUN ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/ && \
-    rm -f /etc/nginx/sites-enabled/default
+# # ===== Configure Nginx =====
+# COPY ./tortoisebot_ros1_docker/web_server/nginx.conf /etc/nginx/conf.d/default.conf
+# RUN ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/ && \
+#     rm -f /etc/nginx/sites-enabled/default
 
 # ===== User Setup =====
 RUN groupadd --gid ${USER_GID} ${USERNAME} && \
@@ -27,9 +24,9 @@ RUN groupadd --gid ${USER_GID} ${USERNAME} && \
     chown -R ${USER_UID}:${USER_GID} /var/www/html
 
 # ===== Web Content =====
-USER ${USERNAME}
 WORKDIR ${WEBPAGE_WS}
 COPY --chown=${USER_UID}:${USER_GID} ./webpage_4_robots /var/www/html/
+RUN sed -i 's/80\ default_server/8001\ default_server/' /etc/nginx/sites-enabled/default
 
 # ===== ROS Environment =====
 ENV ROS_DISTRO=noetic
@@ -41,5 +38,4 @@ USER root
 COPY --chown=${USER_UID}:${USER_GID} ./tortoisebot_ros1_docker/web_server/entrypoint.sh /
 RUN chmod +x /entrypoint.sh
 
-EXPOSE 80
 ENTRYPOINT ["/entrypoint.sh"]

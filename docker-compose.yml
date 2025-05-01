@@ -9,6 +9,7 @@ services:
     image: kkhadka343/kailash-cp22:tortoisebot-ros1-gazebo
     container_name: gazebo_container
     command: /bin/bash -c "source /home/ttbot/simulation_ws/devel/setup.bash && roslaunch tortoisebot_gazebo tortoisebot_playground.launch"
+
     stdin_open: true
     tty: true
     networks:
@@ -34,6 +35,8 @@ services:
     # image: tortoisebot-ros1-waypoints:v1
     image: kkhadka343/kailash-cp22:tortoisebot-ros1-waypoints
     container_name: waypoint_server_container
+    hostname: waypoint_server_container
+    restart: always
     stdin_open: true
     tty: true
     networks:
@@ -42,7 +45,7 @@ services:
       - "9090:9090"  # rosbridge
       - 11315:11315  # web-video-server
     environment:
-      - SLOT_ROSBRIDGE_PORT=9090
+      - SLOT_ROSBRIDGE_PORT=20001
       - ROS_HOSTNAME=waypoint_server_container
       - ROS_MASTER_URI=http://gazebo_container:11311
       - ROS_DISTRO=noetic
@@ -53,15 +56,16 @@ services:
       - roscore_gazebo
 
   mapping:
-    build:
-        context: ~/simulation_ws/src/
-        dockerfile: ./tortoisebot_ros1_docker/mapping/Dockerfile
-    image: tortoisebot-ros1-slam:v1
+    # build:
+    #     context: ~/simulation_ws/src/
+    #     dockerfile: ./tortoisebot_ros1_docker/mapping/Dockerfile
+    # image: tortoisebot-ros1-slam:v1
+    image: kkhadka343/kailash-cp22:tortoisebot-ros1-slam
     container_name: mapping_container
-    stdin_open: true
-    tty: true
     networks:
       - ros_network
+    stdin_open: true
+    tty: true
     environment:
       - DISPLAY=${DISPLAY}
       - QT_X11_NO_MITSHM=1
@@ -82,12 +86,13 @@ services:
     image: kkhadka343/kailash-cp22:tortoisebot-ros1-webapp
     container_name: web_server_container
     command: "/entrypoint.sh"
+    stdin_open: true
+    tty: true
     networks:
       - ros_network
     ports:
-      - "8080:80"
+      - 7000:8001
     environment:
-      - ROSBRIDGE_URL=ws://waypoint_server_container:9090
       - ROS_HOSTNAME=web_server_container
       - ROS_MASTER_URI=http://gazebo_container:11311
       - ROS_DISTRO=noetic
@@ -102,4 +107,4 @@ services:
 networks:
   ros_network:
     driver: bridge
-    name: checkpoint22_ros_network  # Explicitly name the network
+    name: checkpoint22_ros_network
