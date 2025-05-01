@@ -53,10 +53,11 @@ services:
       - roscore_gazebo
 
   mapping:
-    build:
-        context: ~/simulation_ws/src/
-        dockerfile: ./tortoisebot_ros1_docker/mapping/Dockerfile
-    image: tortoisebot-ros1-slam:v1
+    # build:
+    #     context: ~/simulation_ws/src/
+    #     dockerfile: ./tortoisebot_ros1_docker/mapping/Dockerfile
+    # image: tortoisebot-ros1-slam:v1
+    image: kkhadka343/kailash-cp22:tortoisebot-ros1-slam
     container_name: mapping_container
     stdin_open: true
     tty: true
