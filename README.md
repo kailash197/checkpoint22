@@ -42,32 +42,56 @@ sudo apt-get install -y x11-xserver-utils
 ## Task1: ROS1 Docker Simulation
 
 ### Build and Run Instructions
+#### 1. Optional: Build all images (uncomment build section in `docker-compose.yml`)
 ```bash
-# 1. Build all images
 cd ~/simulation_ws/src/tortoisebot_ros1_docker
 docker-compose build
+```
 
-# 2. Start all services
+#### 2. Start all services
+```bash
 xhost +local:root  # For GUI applications
 docker-compose up -d
+```
+All the services including roscore, tortoisebot simulation in gazebo, waypoints action server, rosbridge server, web video server, mapping container are automatically started by the end of this step.
 
-# 3. Check running containers
+#### 3. Check running containers
+```bash
 docker-compose ps
+```
 
-# 4. Attach shell to `roscore_gazebo` container
-docker-compose exec roscore_gazebo /bin/bash
+#### 4. Running Web Appliation
+Nginx Webserver should be up and running by the end of step 2.
+In this step, find the webpage address by running following command and open it on any web browser.
+```bash
+webpage_address
 
-# 5. Move the robot around using the on-screen joystick present in the Web Application.
-# or start/stop using following.
-rostopic pub /cmd_vel geometry_msgs/Twist "{linear: {x: 0.0}, angular: {z: 1.0}}"
-rostopic pub /cmd_vel geometry_msgs/Twist "{linear: {x: 0.0}, angular: {z: 0.0}}"
+# Sample address:
+# https://i-014c91ec77897b767.robotigniteacademy.com/a7e86461-5712-4eb2-bb09-a7344a6f5eb9/webpage/
+```
+Following command returns the rosbridge address. Enter this address on the webpage and click connect.
+```bash
+rosbridge_address
 
-# 6. Local Links
-    ROSBRIGE: ws://localhost:9090
-    Webpage: http://localhost:8080
-    MJPEG Stream Host: http://localhost:11315
+# Sample address
+# wss://i-014c91ec77897b767.robotigniteacademy.com/a7e86461-5712-4eb2-bb09-a7344a6f5eb9/rosbridge/
+```
+MJPEG Stream Host: http://localhost:11315
 
-# 7. Stop services
+#### 5. Move the tortoisebot
+Use the on-screen joystick present in the Web Application to move the tortoisebot around.
+
+#### 6. Stop services
+```bash
 docker-compose down
 xhost -local:root
+```
+
+### Useful commands
+1. Attach shell to `roscore_gazebo` container and test connection to the robot.
+```bash
+docker-compose exec roscore_gazebo /bin/bash
+
+rostopic pub /cmd_vel geometry_msgs/Twist "{linear: {x: 0.0}, angular: {z: 1.0}}"
+rostopic pub /cmd_vel geometry_msgs/Twist "{linear: {x: 0.0}, angular: {z: 0.0}}"
 ```
