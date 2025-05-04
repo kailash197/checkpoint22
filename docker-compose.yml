@@ -1,0 +1,58 @@
+version: '3.7'
+
+services:
+  gazebo:
+    # build:
+    #     context: ~/ros2_ws/src/
+    #     dockerfile: ./tortoisebot_ros2_docker/gazebo/Dockerfile
+    # image: tortoisebot-ros2-gazebo:v1
+    image: kkhadka343/kailash-cp22:tortoisebot-ros2-gazebo
+    container_name: gazebo_container
+    command: /bin/bash -c \
+          "source /opt/ros/galactic/setup.bash \
+          && source /home/ttbot/ros2_ws/install/setup.bash \
+          && ros2 launch tortoisebot_bringup bringup.launch.py use_sim_time:=True"
+    stdin_open: true
+    tty: true
+    network_mode: host
+    environment:
+      - DISPLAY=${DISPLAY}
+      - QT_X11_NO_MITSHM=1
+      - ROS_HOSTNAME=gazebo_container
+      - ROS_DISTRO=galactic
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      - ROS_LOCALHOST_ONLY=0
+      - ROS_DOMAIN_ID=7
+      - CYCLONEDDS_URI=file:///home/ttbot/cyclonedds.xml
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    privileged: true
+
+  slam:
+    # build:
+    #     context: ~/ros2_ws/src/
+    #     dockerfile: ./tortoisebot_ros2_docker/slam/Dockerfile
+    # image: tortoisebot-ros2-slam:v1
+    image: kkhadka343/kailash-cp22:tortoisebot-ros2-slam
+    container_name: slam_container
+    command: /bin/bash -c \
+          "source /opt/ros/galactic/setup.bash \
+          && source /home/ttbot/ros2_ws/install/setup.bash \
+          && ros2 launch tortoisebot_bringup autobringup.launch.py use_sim_time:=True exploration:=True"
+    stdin_open: true
+    tty: true
+    network_mode: host
+    environment:
+      - DISPLAY=${DISPLAY}
+      - QT_X11_NO_MITSHM=1
+      - ROS_HOSTNAME=slam_container
+      - ROS_DISTRO=galactic
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      - ROS_LOCALHOST_ONLY=0
+      - ROS_DOMAIN_ID=7
+      - CYCLONEDDS_URI=file:///home/ttbot/cyclonedds.xml
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    depends_on:
+      - gazebo
+    privileged: true
