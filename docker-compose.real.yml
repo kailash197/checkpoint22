@@ -1,0 +1,63 @@
+version: '3.7'
+
+services:
+  roscore_real:
+    build:
+        context: ~/ros1_ws/src/
+        dockerfile: ./tortoisebot_ros1_docker/roscore_real/Dockerfile
+    image: tortoisebot-ros1-real:v1
+    # image: kkhadka343/kailash-cp22:tortoisebot-ros1-gazebo
+    # image: kkhadka343/kailash-cp22:tortoisebot-ros1-real
+    container_name: roscore_real_container
+    stdin_open: true
+    tty: true
+    networks:
+      - ros_network
+    devices:
+      - "/dev/ttyUSB0:/dev/ttyUSB0"  # YDLIDAR
+      - "/dev/vchiq:/dev/vchiq"       # Raspberry Pi Camera
+      - "/dev/vcsm:/dev/vcsm"         # Raspberry Pi Camera
+    ports:
+      - 11311:11311
+    environment:
+      - DISPLAY=${DISPLAY}
+      - QT_X11_NO_MITSHM=1
+      - ROS_HOSTNAME=roscore_real_container
+      - ROS_MASTER_URI=http://roscore_real_container:11311
+      - ROS_DISTRO=noetic
+      - USERNAME=ttbot
+      - CATKIN_WS=/home/ttbot/ros1_ws
+      - LD_LIBRARY_PATH=/opt/vc/lib:/usr/lib
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - "/opt/vc:/opt/vc:ro"  # Read-only mount of VideoCore
+      - "/usr/lib:/host_lib:ro"  # For library compatibility
+    privileged: true
+
+  # mapping_real:
+  #   # build:
+  #   #     context: ~/simulation_ws/src/
+  #   #     dockerfile: ./tortoisebot_ros1_docker/mapping_real/Dockerfile
+  #   # image: tortoisebot-ros1-slam-real:v1
+  #   image: kkhadka343/kailash-cp22:tortoisebot-ros1-slam
+  #   container_name: mapping_real_container
+  #   networks:
+  #     - ros_network
+  #   stdin_open: true
+  #   tty: true
+  #   environment:
+  #     - DISPLAY=${DISPLAY}
+  #     - QT_X11_NO_MITSHM=1
+  #     - ROS_HOSTNAME=mapping_real_container
+  #     - ROS_MASTER_URI=http://mapping_real_container:11311
+  #     - ROS_DISTRO=noetic
+  #   volumes:
+  #     - /tmp/.X11-unix:/tmp/.X11-unix
+  #   depends_on:
+  #     - roscore_real
+  #   privileged: true
+
+networks:
+  ros_network:
+    driver: bridge
+    name: checkpoint22_ros_network
