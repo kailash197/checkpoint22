@@ -2,12 +2,11 @@ version: '3.7'
 
 services:
   roscore_real:
-    build:
-        context: ~/ros1_ws/src/
-        dockerfile: ./tortoisebot_ros1_docker/roscore_real/Dockerfile
-    image: tortoisebot-ros1-real:v1
-    # image: kkhadka343/kailash-cp22:tortoisebot-ros1-gazebo
-    # image: kkhadka343/kailash-cp22:tortoisebot-ros1-real
+    # build:
+    #     context: ~/ros1_ws/src/
+    #     dockerfile: ./tortoisebot_ros1_docker/roscore_real/Dockerfile
+    # image: tortoisebot-ros1-real:v1
+    image: kkhadka343/kailash-cp22:tortoisebot-ros1-real
     container_name: roscore_real_container
     stdin_open: true
     tty: true

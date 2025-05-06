@@ -95,3 +95,65 @@ docker-compose exec roscore_gazebo /bin/bash
 rostopic pub /cmd_vel geometry_msgs/Twist "{linear: {x: 0.0}, angular: {z: 1.0}}"
 rostopic pub /cmd_vel geometry_msgs/Twist "{linear: {x: 0.0}, angular: {z: 0.0}}"
 ```
+
+## Task3: ROS1 Docker with Real Robot
+
+### Build and Run Instructions
+
+#### 1. Optional: Build all images
+
+The image for real robot to bring up firmware, camera and lidar were built in raspberrypi.
+Uncomment build section in `docker-compose.real.yml` and comment out the line that pulls image from dockerhub.
+```bash
+cd ~/ros1/src/tortoisebot_ros1_docker
+docker-compose -f docker-compose.real.yml build
+```
+
+#### 2. Start all services
+
+Bring up all services using following command. Notice the docker compose file for real robot.
+```bash
+xhost +local:root  # For GUI applications
+docker-compose -f docker-compose.real.yml up -d
+```
+
+#### 3. Check images and  running containers
+- Check images
+    ```bash
+    docker images
+    ```
+
+    Sample output:
+    ```bash
+    REPOSITORY                TAG                     IMAGE ID       CREATED          SIZE
+    kkhadka343/kailash-cp22   tortoisebot-ros1-real   b14d2f0446d0   31 minutes ago   3.01GB
+    tortoisebot-ros1-real     v1                      b14d2f0446d0   31 minutes ago   3.01GB
+    <none>                    <none>                  7ea4fb6c4838   3 hours ago      2.92GB
+    ros                       noetic-ros-core-focal   49ac5c2cfabd   2 months ago     740MB
+    ```
+
+- Check containers
+    ```bash
+    docker-compose -f docker-compose.real.yml ps
+    ```
+
+    Sample Output:
+    ```bash
+    Name               Command       State                      Ports
+    ----------------------------------------------------------------------------------------------
+    roscore_real_container   /entrypoint.sh   Up      0.0.0.0:11311->11311/tcp,:::11311->11311/tcp
+    ```
+
+#### 4. Move the tortoisebot
+Run telop program in `roscore_real` service to move the tortoisebot around.
+```bash
+docker-compose -f docker-compose.real.yml exec roscore_real bash -c \
+    "source /home/ttbot/ros1_ws/devel/setup.bash \
+    && rosrun teleop_twist_keyboard teleop_twist_keyboard.py"
+```
+
+#### 5. Stop services
+```bash
+docker-compose -f docker-compose.real.yml down
+xhost -local:root
+```
