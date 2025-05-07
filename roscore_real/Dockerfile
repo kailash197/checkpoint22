@@ -1,4 +1,4 @@
-FROM  ros:noetic-ros-core-focal
+FROM arm64v8/ros:noetic-ros-base  
 
 # ===== User Setup =====
 ARG USERNAME=ttbot
@@ -62,8 +62,9 @@ RUN apt-get update \
 
 
 RUN mkdir -p /etc/ros/rosdep/sources.list.d \
+    && rm -f /etc/ros/rosdep/sources.list.d/20-default.list \  # Remove existing config \
     && echo "yaml https://raw.githubusercontent.com/UbiquityRobotics/rosdep/master/raspberry-pi.yaml" > /etc/ros/rosdep/sources.list.d/30-ubiquity.list \
-    && rosdep init \
+    && (rosdep init || true) \
     && rosdep update \
     && rm -rf /var/lib/apt/lists/*
 

@@ -2,6 +2,7 @@ version: '3.7'
 
 services:
   roscore_real:
+    # platform: linux/arm64/v8
     # build:
     #     context: ~/ros1_ws/src/
     #     dockerfile: ./tortoisebot_ros1_docker/roscore_real/Dockerfile
@@ -34,11 +35,12 @@ services:
     privileged: true
 
   mapping_real:
-    build:
-        context: ~/ros1_ws/src/
-        dockerfile: ./tortoisebot_ros1_docker/mapping_real/Dockerfile
-    image: tortoisebot-ros1-slam-real:v1
-    # image: kkhadka343/kailash-cp22:tortoisebot-ros1-slam-real
+    # platform: linux/arm64/v8
+    # build:
+    #     context: ~/ros1_ws/src/
+    #     dockerfile: ./tortoisebot_ros1_docker/mapping_real/Dockerfile
+    # image: tortoisebot-ros1-slam-real:v1
+    image: kkhadka343/kailash-cp22:tortoisebot-ros1-slam-real
     container_name: mapping_real_container
     networks:
       - ros_network

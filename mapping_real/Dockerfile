@@ -1,4 +1,4 @@
-FROM kkhadka343/kailash-cp22:tortoisebot-ros1-real
+FROM ros:noetic-robot
 
 # ===== Root Section =====
 USER root
@@ -7,92 +7,106 @@ ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 ENV DEBIAN_FRONTEND=noninteractive
 SHELL ["/bin/bash", "-c"]
-ARG USERNAME=ttbot
 ENV CATKIN_WS=/home/${USERNAME}/ros1_ws
 
-# Install ROS packages
-RUN sudo apt-get update \
-    && sudo apt-get install -y --no-install-recommends \
-        ros-noetic-joy \
-        ros-noetic-teleop-twist-joy \
-        ros-noetic-amcl \
-        ros-noetic-map-server \
-        ros-noetic-move-base \
-        ros-noetic-rqt-image-view \
-        ros-noetic-gmapping \
-        ros-noetic-navigation \
-        ros-noetic-slam-gmapping \
-        ros-noetic-dwa-local-planner \
-        ros-noetic-joint-state-publisher-gui \
-        ros-noetic-ira-laser-tools \ 
-        python3-wstool \
-        python3-sphinx \
-        ninja-build \
-        stow \
-    && sudo rm -rf /var/lib/apt/lists/*
+# Install system dependencies first
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    ninja-build \
+    stow \
+    python3-wstool \
+    python3-rosdep \
+    python3-sphinx \
+    libgflags-dev \
+    libgoogle-glog-dev \
+    libceres-dev \
+    liblua5.3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create Lua symlink for Cartographer compatibility
+RUN ln -s /usr/lib/$(uname -m)-linux-gnu/liblua5.3.so /usr/lib/$(uname -m)-linux-gnu/liblua5.2.so || \
+    echo "Warning: Lua symlink creation failed - proceeding anyway"
 
 # Create and build cartographer workspace
-RUN mkdir -p ${CATKIN_WS}/carto_ws \
+RUN mkdir -p ${CATKIN_WS}/carto_ws/src \
     && cd ${CATKIN_WS}/carto_ws \
     && wstool init src \
     && wstool merge -t src https://raw.githubusercontent.com/cartographer-project/cartographer_ros/master/cartographer_ros.rosinstall \
     && wstool update -t src
 
-RUN sed -i 's/ <depend>libabsl-dev<\/depend>/<!-- depend>libabsl-dev<\/depend-->/' ${CATKIN_WS}/carto_ws/src/cartographer/package.xml
+# Patch package.xml before building
+RUN sed -i 's/<depend>libabsl-dev<\/depend>/<!-- depend>libabsl-dev<\/depend -->/' \
+    ${CATKIN_WS}/carto_ws/src/cartographer/package.xml
 
-# ===== ROS/Gazebo Dependencies =====
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        gazebo11 \
-        ros-noetic-gazebo-ros-pkgs \
-        ros-noetic-gazebo-ros-control \
-    && rm -rf /var/lib/apt/lists/*
-
-RUN sudo rm -f /etc/ros/rosdep/sources.list.d/20-default.list \
-    && (sudo rosdep init || true) \
-    && rosdep update \
-    && rosdep install --from-paths src --ignore-src --rosdistro=noetic -y
-
-WORKDIR ${CATKIN_WS}/carto_ws/src
-
-# Clone additional perception packages
-RUN git clone -b melodic-devel https://github.com/ros-perception/perception_pcl.git \
-    && git clone https://github.com/ros-perception/pcl_msgs \
-    && git clone -b noetic-devel https://github.com/jsk-ros-pkg/geometry2_python3.git
-
-WORKDIR ${CATKIN_WS}
-RUN source /opt/ros/noetic/setup.bash && catkin_make && source devel/setup.bash
-
-WORKDIR ${CATKIN_WS}/carto_ws
-RUN apt-get update \
-    && apt-get install -y sudo lsb-release curl gnupg \
-    && apt-get install -y software-properties-common \
+# Add universe repository first
+RUN apt-get update && apt-get install -y software-properties-common \
     && add-apt-repository universe \
-    && apt-get update \
-    && apt-get install -y libgflags-dev
+    && apt-get update
 
-RUN source /opt/ros/noetic/setup.bash \
-    && source ${CATKIN_WS}/devel/setup.bash \
+# Then run rosdep install
+RUN rosdep install --from-paths ${CATKIN_WS}/carto_ws/src --ignore-src --rosdistro=noetic -y \
+    --skip-keys="libprotobuf-dev"
+
+# Initialize rosdep and install dependencies
+RUN rm -f /etc/ros/rosdep/sources.list.d/20-default.list \
+    && (rosdep init || true) \
     && rosdep update \
-    && rosdep install --from-paths src --ignore-src --rosdistro=noetic -y \
+    && rosdep install --from-paths ${CATKIN_WS}/carto_ws/src --ignore-src --rosdistro=noetic -y
+
+# Install Abseil manually
+RUN cd ${CATKIN_WS}/carto_ws \
     && src/cartographer/scripts/install_abseil.sh
 
+# Build Cartographer with isolated build
+WORKDIR ${CATKIN_WS}/carto_ws
 RUN source /opt/ros/noetic/setup.bash \
-    && source ${CATKIN_WS}/devel/setup.bash \
-    && catkin_make_isolated --install --use-ninja -j3 -l3 \
-    && source devel_isolated/setup.bash 
+    && catkin_make_isolated --install --use-ninja \
+    && source install_isolated/setup.bash
 
+# ======= Create User =======
+RUN groupadd --gid ${USER_GID} ${USERNAME} \
+    && useradd -s /bin/bash --uid ${USER_UID} --gid ${USER_GID} -m ${USERNAME} \
+    && mkdir -p ${CATKIN_WS}/src \
+    && chown -R $USER_UID:$USER_GID /home/${USERNAME} \
+    && echo "${USERNAME} ALL=(root) NOPASSWD:ALL" > /etc/sudoers.d/${USERNAME} \
+    && chmod 0440 /etc/sudoers.d/${USERNAME} \
+    && usermod -a -G dialout ${USERNAME} \
+    && usermod -aG video ${USERNAME}
+
+# ===== Copy and Build =====
+COPY ./tortoisebot ${CATKIN_WS}/src/tortoisebot
+COPY ./raspicam_node ${CATKIN_WS}/src/raspicam_node
+
+RUN apt-get update \
+    && apt-get install -y \
+    ros-noetic-compressed-image-transport \
+    ros-noetic-camera-info-manager \
+    ros-noetic-image-transport \
+    ros-noetic-dynamic-reconfigure \
+    ros-noetic-nodelet \
+    ros-noetic-roscpp \
+    ros-noetic-sensor-msgs \
+    libraspberrypi-dev \
+    libraspberrypi0 \
+    python3-rpi.gpio \
+    libraspberrypi-bin \
+    && rm -rf /var/lib/apt/lists/*
+
+# ===== User Context + Workspace Setup =====
+USER ${USERNAME}
+WORKDIR ${CATKIN_WS}
+
+# Build main workspace
 RUN source /opt/ros/noetic/setup.bash \
-    && source ${CATKIN_WS}/carto_ws/devel_isolated/setup.bash \
+    && source ${CATKIN_WS}/carto_ws/install_isolated/setup.bash \
     && cd ${CATKIN_WS} \
     && rm -rf ./build ./devel \
     && catkin_make \
     && source devel/setup.bash
 
 # Set up environment
-RUN echo "source ${CATKIN_WS}/carto_ws/install_isolated/setup.bash" >> /home/${USERNAME}/.bashrc
-RUN chmod +x ${CATKIN_WS}/src/tortoisebot_firmware/scripts/odom_pub.py
-WORKDIR ${CATKIN_WS}
+RUN echo "source ${CATKIN_WS}/carto_ws/install_isolated/setup.bash" >> /home/${USERNAME}/.bashrc \
+    && echo "source ${CATKIN_WS}/devel/setup.bash" >> /home/${USERNAME}/.bashrc
 
 # ===== Environment Variables =====
 ENV ROS_DISTRO=noetic
@@ -101,7 +115,7 @@ ENV ROS_HOSTNAME=mapping_real_container
 ENV PATH="/home/${USERNAME}/.local/bin:${PATH}"
 
 # ===== Entrypoint =====
-USER ${USERNAME}
-COPY --chown=${USER_UID}:${USER_GID} ./tortoisebot_ros1_docker/mapping_real/entrypoint.sh /
-RUN chmod +x /entrypoint.sh
+WORKDIR ${CATKIN_WS}
+COPY ./tortoisebot_ros1_docker/mapping_real/entrypoint.sh /
+RUN sudo chmod +x /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]
