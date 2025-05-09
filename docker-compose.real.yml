@@ -38,38 +38,38 @@ services:
       - /dev:/dev  # Access to all devices
     privileged: true
 
-  # mapping2_real:
-  #   # platform: linux/arm64/v8
-  #   build:
-  #       context: ~/ros2_ws/src/
-  #       dockerfile: ./tortoisebot_ros2_docker/mapping2_real/Dockerfile
-  #   image: tortoisebot-ros2-slam-real:v1
-  #   # image: kkhadka343/kailash-cp22:tortoisebot-ros2-slam-real
-  #   container_name: mapping2_real_container
-  #   networks:
-  #     - ros2_network
-  #   stdin_open: true
-  #   tty: true
-  #   environment:
-  #     - DISPLAY=${DISPLAY}
-  #     - QT_X11_NO_MITSHM=1
-  #     - ROS_HOSTNAME=mapping2_real_container
-  #     - USERNAME=ttbot
-  #     - ROS_DISTRO=galactic
-  #     - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-  #     - ROS_LOCALHOST_ONLY=0
-  #     - ROS_DOMAIN_ID=7
-  #     - CYCLONEDDS_URI=file:///cyclonedds.xml
-  #     - ROS_IPV6=on
-  #     - CATKIN_WS=/home/ttbot/ros2_ws
-  #   volumes:
-  #     - /tmp/.X11-unix:/tmp/.X11-unix
-  #     - /dev:/dev  # Access to all devices
-  #   depends_on:
-  #     - ros2_real
-  #   privileged: true
-
-# networks:
-#   ros2_network:
-#     driver: bridge
-#     name: checkpoint22_ros2_network  # Explicitly name the network
+  slam2_real:
+    # platform: linux/arm64/v8
+    # build:
+    #     context: ~/ros2_ws/src/
+    #     dockerfile: ./tortoisebot_ros2_docker/slam2_real/Dockerfile
+    # image: tortoisebot-ros2-slam-real:v1
+    image: kkhadka343/kailash-cp22:tortoisebot-ros2-slam-real
+    container_name: slam2_real_container
+    command: tail -f /dev/null
+    network_mode: host
+    stdin_open: true
+    tty: true
+    environment:
+      - DISPLAY=${DISPLAY}
+      - QT_X11_NO_MITSHM=1
+      - ROS_HOSTNAME=slam2_real_container
+      - ROS_DISTRO=galactic
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      - ROS_LOCALHOST_ONLY=0
+      - ROS_DOMAIN_ID=7
+      - CYCLONEDDS_URI=file:///home/ttbot/cyclonedds.xml
+    devices:
+      - "/dev/ttyUSB0:/dev/ttyUSB0"  # YDLIDAR
+      - "/dev/vchiq:/dev/vchiq"       # Raspberry Pi Camera
+      - "/dev/vcsm:/dev/vcsm"         # Raspberry Pi Camera
+      - /dev/video0:/dev/video0  # Camera device (if using V4L2)
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - "/opt/vc:/opt/vc:ro"  # Read-only mount of VideoCore
+      - "/usr/lib:/host_lib:ro"  # For library compatibility
+      - /dev:/dev  # Access to all devices
+    depends_on:
+      - ros2_real
+    privileged: true
+  
