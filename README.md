@@ -39,56 +39,98 @@ sudo apt-get update
 sudo apt-get install -y x11-xserver-utils
 ```
 
-## Task2: ROS2 Tortoisebot Simulation in Gazebo
+# Task2: ROS2 Tortoisebot Simulation in Gazebo
 
-### Build and Run Instructions
-#### 1. Build all images (uncomment build section in `docker-compose.yml`)
+## Run Instructions
+
+### 1. Pull images from dockerhub to docker host
+Command to manually pull these images from dockerhub:
+Terminal [PC]:
 ```bash
+docker pull kkhadka343/kailash-cp22:tortoisebot-ros2-gazebo
+docker pull kkhadka343/kailash-cp22:tortoisebot-ros2-slam
+```
+### 2. Clone the repo
+Terminal [PC]:
+```bash
+mkdir -p ~/ros2_ws/src # if doesn't exist yet
+cd ~/ros2_ws/src
+git clone -b ros2-galactic https://github.com/kailash197/checkpoint22.git
+mv checkpoint22 tortoisebot_ros2_docker
 cd ~/ros2_ws/src/tortoisebot_ros2_docker
-docker-compose build
 ```
 
-#### 2. Start all services
+### 3. Start all services
+Terminal [PC]:
 ```bash
 xhost +local:root  # For GUI applications
+
+cd ~/ros2_ws/src/tortoisebot_ros2_docker
 docker-compose up -d
 ```
-All the services including tortoisebot simulation in gazebo and SLAM container are automatically started by the end of this step.
+All the services including tortoisebot simulation in gazebo and slam container are automatically started by the end of this step. 
+Docker service `gazebo` running in `gazebo_container` includes:
+- Tortoisebot simulation in gazebo
+- Lidar node
+- Camera node
 
-#### 3. Check images & running containers
-- Check images
+Docker service `slam` running in `slam_container` includes:
+- Cartographer node
+- Rviz2 node
+- Teleop [See step 3]
+
+#### Check images & running containers
+- Check images  
+    Terminal [PC]:
     ```bash
     docker images
     ```
     Expected Output:
     ```bash
-    REPOSITORY                TAG                       IMAGE ID       CREATED             SIZE
-    tortoisebot-ros2-slam     v1                        3bc3e31ead0c   13 minutes ago      3.84GB
-    tortoisebot-ros2-gazebo   v1                        328555225386   42 minutes ago      3.54GB
-    osrf/ros                  galactic-desktop          57a31ebe075c   16 months ago       3.05GB
+    REPOSITORY                TAG                       IMAGE ID       CREATED        SIZE
+    kkhadka343/kailash-cp22   tortoisebot-ros2-slam     21cd5333026c   8 hours ago    3.75GB
+    tortoisebot-ros2-slam     v1                        21cd5333026c   8 hours ago    3.75GB
+    kkhadka343/kailash-cp22   tortoisebot-ros2-gazebo   90b5d12259b1   8 hours ago    3.55GB
+    tortoisebot-ros2-gazebo   v1                        90b5d12259b1   8 hours ago    3.55GB
     ```
-- Check containers
+
+- Check containers  
+    Terminal [PC]:
     ```bash
     docker-compose ps
     ```
-    Expected Output:
+    Output:
     ```bash
         Name                    Command               State   Ports
     -----------------------------------------------------------------
     gazebo_container   /entrypoint.sh /bin/bash - ...   Up
     slam_container     /entrypoint.sh /bin/bash - ...   Up
     ```
+    
+    ```bash
+    docker ps
+    ```
+    Output:
+    ```bash
+    CONTAINER ID   IMAGE                           COMMAND                  CREATED              STATUS              PORTS     NAMES
+    54907b3b4795   tortoisebot-ros2-slam:v1        "/entrypoint.sh /bin…"   About a minute ago   Up About a minute             slam_container
+    5aacd1a002f5   tortoisebot-ros2-gazebo:v1      "/entrypoint.sh /bin…"   About a minute ago   Up About a minute             gazebo_container
+    ```
 
-#### 4. Move the tortoisebot
-Run `telop` program in `slam_container` (`slam` service) to move the tortoisebot around.
+### 4. Move the tortoisebot
+Run `telop` program in `slam_container` (`slam` service) to move the tortoisebot around.  
+Terminal [PC]:
 ```bash
+cd ~/ros2_ws/src/tortoisebot_ros2_docker
 docker-compose exec slam bash -c \
     "source /opt/ros/galactic/setup.bash \
     && ros2 run teleop_twist_keyboard teleop_twist_keyboard"
 ```
 
-#### 6. Stop services
+### 5. Stop services
+Terminal [PC]:
 ```bash
+cd ~/ros2_ws/src/tortoisebot_ros2_docker
 docker-compose down
 xhost -local:root
 ```
