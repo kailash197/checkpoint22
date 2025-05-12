@@ -29,6 +29,7 @@ services:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
       - ROS_LOCALHOST_ONLY=0
       - ROS_DOMAIN_ID=7
+      - ROS_IPV6=on
       - CYCLONEDDS_URI=file:///home/ttbot/cyclonedds.xml
       - LD_LIBRARY_PATH=/opt/vc/lib:/usr/lib
     volumes:
@@ -39,7 +40,7 @@ services:
     privileged: true
 
   slam2_real:
-    # platform: linux/arm64/v8
+    # platform: linux/arm64
     # build:
     #     context: ~/ros2_ws/src/
     #     dockerfile: ./tortoisebot_ros2_docker/slam2_real/Dockerfile
@@ -47,9 +48,9 @@ services:
     image: kkhadka343/kailash-cp22:tortoisebot-ros2-slam-real
     container_name: slam2_real_container
     command: tail -f /dev/null
-    network_mode: host
     stdin_open: true
     tty: true
+    network_mode: host
     environment:
       - DISPLAY=${DISPLAY}
       - QT_X11_NO_MITSHM=1
@@ -58,6 +59,7 @@ services:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
       - ROS_LOCALHOST_ONLY=0
       - ROS_DOMAIN_ID=7
+      - ROS_IPV6=on
       - CYCLONEDDS_URI=file:///home/ttbot/cyclonedds.xml
     devices:
       - "/dev/ttyUSB0:/dev/ttyUSB0"  # YDLIDAR

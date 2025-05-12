@@ -14,7 +14,8 @@ services:
           && ros2 launch tortoisebot_bringup bringup.launch.py use_sim_time:=True"
     stdin_open: true
     tty: true
-    network_mode: host
+    networks:
+      - ros2_network
     environment:
       - DISPLAY=${DISPLAY}
       - QT_X11_NO_MITSHM=1
@@ -24,6 +25,8 @@ services:
       - ROS_LOCALHOST_ONLY=0
       - ROS_DOMAIN_ID=7
       - CYCLONEDDS_URI=file:///home/ttbot/cyclonedds.xml
+      - DOCKER_HOSTIP=172.25.0.5
+      - DOCKER_HOSTNAME=xterm1
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix
     privileged: true
@@ -41,7 +44,8 @@ services:
           && ros2 launch tortoisebot_bringup autobringup.launch.py use_sim_time:=True exploration:=True"
     stdin_open: true
     tty: true
-    network_mode: host
+    networks:
+      - ros2_network
     environment:
       - DISPLAY=${DISPLAY}
       - QT_X11_NO_MITSHM=1
@@ -51,8 +55,14 @@ services:
       - ROS_LOCALHOST_ONLY=0
       - ROS_DOMAIN_ID=7
       - CYCLONEDDS_URI=file:///home/ttbot/cyclonedds.xml
+      - DOCKER_HOSTIP=172.25.0.5
+      - DOCKER_HOSTNAME=xterm1
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix
     depends_on:
       - gazebo
     privileged: true
+
+networks:
+  ros2_network:
+    driver: bridge
